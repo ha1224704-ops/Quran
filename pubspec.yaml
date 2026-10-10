@@ -1,20 +1,13 @@
-
-name: noor_alayat
-description: تطبيق نور الآيات للقرآن الكريم والأذكار والتفسير
-publish_to: "none"
+name: noor_al_quloob
+description: Noor Al Ayat Sadaqa Nasser Aziz by Haider
+publish_to: none
 version: 1.0.0+1
-
 environment:
-  sdk: ">=3.4.0 <4.0.0"
-
+  sdk: ">=3.0.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-
+  quran: ^1.2.1
+  just_audio: ^0.9.36
 flutter:
   uses-material-design: true
