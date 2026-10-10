@@ -1,18 +1,13 @@
-name: uran
-description: تطبيق قرآن كريم - رفيقك اليومي مع كتاب الله
-publish_to: 'none'
+name: quran_noor
+description: Quran Noor for Nasser Aziz
+publish_to: none
 version: 1.0.0+1
-
 environment:
-  sdk: '>=2.17.0 <4.0.0'
-
+  sdk: ">=2.19.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  shared_preferences: ^2.2.2
-  url_launcher: ^6.2.4
+  quran: ^1.2.1
   just_audio: ^0.9.36
-
 flutter:
   uses-material-design: true
