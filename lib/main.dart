@@ -3,52 +3,73 @@ import 'package:quran/quran.dart' as quran;
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/services.dart';
 
-void main() { runApp(NoorIraqiApp()); }
+void main() => runApp(DiwanNoorApp());
 
-class NoorIraqiApp extends StatelessWidget {
+class DiwanNoorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: SplashIraqi());
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: 'Cairo'),
+      home: DiwanSplash(),
+    );
   }
 }
 
-class SplashIraqi extends StatefulWidget {
+// سبلاش ديوان عراقي
+class DiwanSplash extends StatefulWidget {
   @override
-  State<SplashIraqi> createState() => SplashIraqiState();
+  State<DiwanSplash> createState() => _DiwanSplashState();
 }
 
-class SplashIraqiState extends State<SplashIraqi> {
-  double p = 0;
+class _DiwanSplashState extends State<DiwanSplash> with SingleTickerProviderStateMixin {
+  late AnimationController ctrl;
+  double prog = 0;
   @override
-  void initState() { super.initState(); start(); }
-  start() async {
+  void initState() {
+    super.initState();
+    ctrl = AnimationController(vsync: this, duration: Duration(seconds: 2))..repeat();
+    boot();
+  }
+  boot() async {
     for (int i = 0; i <= 100; i++) {
-      await Future.delayed(Duration(milliseconds: 20));
-      setState(() { p = i / 100; });
+      await Future.delayed(Duration(milliseconds: 25));
+      setState(() => prog = i / 100);
     }
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => MainIraqi()));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => DiwanHome()));
   }
+  @override
+  void dispose() { ctrl.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0B3D2E),
+      backgroundColor: Color(0xFF121B22),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 100, height: 100, decoration: BoxDecoration(color: Color(0xFFE8C86A), shape: BoxShape.circle), child: Icon(Icons.mosque, size: 60, color: Color(0xFF0B3D2E))),
-            SizedBox(height: 14),
-            Text("نور الآيات", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
-            Text("النسخة العراقية الفاخرة", style: TextStyle(color: Color(0xFFE8C86A), fontSize: 13, fontWeight: FontWeight.bold)),
-            SizedBox(height: 4),
-            Text("صدقة جارية لروح المرحوم", style: TextStyle(color: Colors.white60, fontSize: 11)),
-            Text("ناصر عزيز - رحمه الله", style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-            SizedBox(height: 25),
-            Padding(padding: EdgeInsets.symmetric(horizontal: 70), child: LinearProgressIndicator(value: p, color: Color(0xFFE8C86A), backgroundColor: Colors.white12)),
+            RotationTransition(
+              turns: ctrl,
+              child: Container(
+                width: 110, height: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Color(0xFFD4AF37), width: 3),
+                ),
+                child: Icon(Icons.auto_stories, size: 55, color: Color(0xFFD4AF37)),
+              ),
+            ),
+            SizedBox(height: 18),
+            Text("ديوان نور القلوب", style: TextStyle(color: Colors.white, fontSize: 27, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            Text("النسخة العراقية - ما مطروقة", style: TextStyle(color: Color(0xFFD4AF37), fontSize: 11, fontWeight: FontWeight.bold)),
+            SizedBox(height: 6),
+            Text("وقف للمرحوم ناصر عزيز", style: TextStyle(color: Colors.white54, fontSize: 11)),
+            SizedBox(height: 30),
+            SizedBox(width: 180, child: LinearProgressIndicator(value: prog, color: Color(0xFFD4AF37), backgroundColor: Colors.white10)),
             SizedBox(height: 8),
-            Text("${(p*100).toInt()}% يحمل...", style: TextStyle(color: Colors.white38, fontSize: 10)),
-            SizedBox(height: 25),
-            Container(padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)), child: Text("صنع بكل فخر في العراق - حيدر", style: TextStyle(color: Colors.white24, fontSize: 9))),
+            Text("ديوان عراقي ${ (prog*100).toInt()}%", style: TextStyle(color: Colors.white24, fontSize: 9)),
+            SizedBox(height: 20),
+            Text("تأليف المطور العراقي حيدر", style: TextStyle(color: Colors.white10, fontSize: 9)),
           ],
         ),
       ),
@@ -56,98 +77,126 @@ class SplashIraqiState extends State<SplashIraqi> {
   }
 }
 
-class MainIraqi extends StatefulWidget {
+class DiwanHome extends StatefulWidget {
   @override
-  State<MainIraqi> createState() => MainIraqiState();
+  State<DiwanHome> createState() => _DiwanHomeState();
 }
 
-class MainIraqiState extends State<MainIraqi> {
-  int tab = 0;
+class _DiwanHomeState extends State<DiwanHome> {
+  int currentTab = 0;
   @override
   Widget build(BuildContext context) {
-    Widget page;
-    if (tab == 0) page = QuranIraqi();
-    else if (tab == 1) page = AzkarIraqi();
-    else if (tab == 2) page = SebhaIraqi();
-    else if (tab == 3) page = QiblaIraqi();
-    else page = DevIraqiPage();
+    List<Widget> pages = [DiwanQuran(), DiwanKhatma(), DiwanTasbeeh(), DiwanIraqiDev()];
     return Scaffold(
-      body: page,
+      body: pages[currentTab],
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: tab,
-        onTap: (i) { setState(() { tab = i; }); },
+        currentIndex: currentTab,
+        onTap: (i) => setState(() => currentTab = i),
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Color(0xFF0B3D2E),
-        unselectedItemColor: Colors.black38,
+        backgroundColor: Color(0xFF121B22),
+        selectedItemColor: Color(0xFFD4AF37),
+        unselectedItemColor: Colors.white38,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: "القرآن"),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "اذكار"),
-          BottomNavigationBarItem(icon: Icon(Icons.circle), label: "سبحة"),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: "القبلة"),
-          BottomNavigationBarItem(icon: Icon(Icons.flag), label: "المطور"),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: "الديوان"),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle_outline), label: "ختمتي"),
+          BottomNavigationBarItem(icon: Icon(Icons.grain_outlined), label: "سبحتي"),
+          BottomNavigationBarItem(icon: Icon(Icons.person_pin_circle_outlined), label: "عراقي"),
         ],
       ),
     );
   }
 }
 
-// ========== قرآن عراقي مع بحث و آية اليوم ==========
-class QuranIraqi extends StatefulWidget {
+// صفحة القرآن بطريقة ديوان
+class DiwanQuran extends StatefulWidget {
   @override
-  State<QuranIraqi> createState() => QuranIraqiState();
+  State<DiwanQuran> createState() => _DiwanQuranState();
 }
 
-class QuranIraqiState extends State<QuranIraqi> {
-  String search = "";
+class _DiwanQuranState extends State<DiwanQuran> {
+  String filter = "الكل";
   @override
   Widget build(BuildContext context) {
-    String dailyVerse = quran.getVerse(2, 255, verseEndSymbol: false);
     return Scaffold(
-      backgroundColor: Color(0xFFFEF9EF),
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text("القرآن الكريم - عراقي", style: TextStyle(color: Colors.white, fontSize: 15))),
+      backgroundColor: Color(0xFFF8F3E6),
+      appBar: AppBar(
+        backgroundColor: Color(0xFF121B22),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("ديوان القرآن", style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            Text("114 سورة - 30 جزء - رواية حفص", style: TextStyle(color: Color(0xFFD4AF37), fontSize: 9)),
+          ],
+        ),
+        actions: [IconButton(icon: Icon(Icons.search, color: Colors.white), onPressed: () {})],
+      ),
       body: Column(
         children: [
           Container(
             margin: EdgeInsets.all(12),
             padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(14)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            decoration: BoxDecoration(color: Color(0xFF121B22), borderRadius: BorderRadius.circular(14)),
+            child: Row(
               children: [
-                Row(children: [Icon(Icons.auto_awesome, color: Color(0xFFE8C86A), size: 16), SizedBox(width: 6), Text("آية اليوم", style: TextStyle(color: Color(0xFFE8C86A), fontSize: 11, fontWeight: FontWeight.bold))]),
-                SizedBox(height: 6),
-                Text(dailyVerse, textAlign: TextAlign.right, style: TextStyle(color: Colors.white, fontSize: 12, height: 1.5)),
-                SizedBox(height: 4),
-                Text("سورة البقرة - 255 - آية الكرسي", style: TextStyle(color: Colors.white38, fontSize: 9)),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("ورد اليوم", style: TextStyle(color: Color(0xFFD4AF37), fontSize: 10, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text(quran.getVerse(55, 1, verseEndSymbol: false) + " ...", style: TextStyle(color: Colors.white, fontSize: 11, height: 1.4), maxLines: 2),
+                      Text("سورة الرحمن - 1", style: TextStyle(color: Colors.white38, fontSize: 8)),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 10),
+                Container(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: Color(0xFFD4AF37), borderRadius: BorderRadius.circular(20)), child: Text("اقرأ الآن", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF121B22)))),
               ],
             ),
           ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: TextField(
-              decoration: InputDecoration(hintText: "ابحث عن سورة...", prefixIcon: Icon(Icons.search, size: 18), filled: true, fillColor: Colors.white, contentPadding: EdgeInsets.symmetric(vertical: 8), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
-              onChanged: (v) { setState(() { search = v; }); },
+          Container(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                _filterChip("الكل", filter == "الكل", () => setState(() => filter = "الكل")),
+                _filterChip("مكية", filter == "مكية", () => setState(() => filter = "مكية")),
+                _filterChip("مدنية", filter == "مدنية", () => setState(() => filter = "مدنية")),
+                _filterChip("طوال", filter == "طوال", () => setState(() => filter = "طوال")),
+                _filterChip("قصار", filter == "قصار", () => setState(() => filter = "قصار")),
+              ],
             ),
           ),
-          SizedBox(height: 8),
           Expanded(
             child: ListView.builder(
               itemCount: 114,
               itemBuilder: (c, i) {
                 int n = i + 1;
-                String name = quran.getSurahNameArabic(n);
-                String en = quran.getSurahName(n);
-                if (search.isNotEmpty) {
-                  if (!name.contains(search) &&!en.toLowerCase().contains(search.toLowerCase())) return SizedBox();
+                String place = quran.getPlaceOfRevelation(n);
+                String placeAr = place == "Makkah" ? "مكية" : "مدنية";
+                int verses = quran.getVerseCount(n);
+                if (filter != "الكل") {
+                  if (filter == "مكية" && placeAr != "مكية") return SizedBox();
+                  if (filter == "مدنية" && placeAr != "مدنية") return SizedBox();
+                  if (filter == "طوال" && verses < 100) return SizedBox();
+                  if (filter == "قصار" && verses >= 100) return SizedBox();
                 }
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+                return Container(
+                  margin: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.black12)),
                   child: ListTile(
-                    leading: CircleAvatar(backgroundColor: Color(0xFF0B3D2E), radius: 15, child: Text("$n", style: TextStyle(color: Colors.white, fontSize: 10))),
-                    title: Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    subtitle: Text("$en - ${quran.getVerseCount(n)} آية - ${quran.getPlaceOfRevelation(n) == "Makkah"? "مكية" : "مدنية"}", style: TextStyle(fontSize: 9, color: Colors.black45)),
-                    trailing: Icon(Icons.arrow_forward_ios, size: 10),
-                    onTap: () { Navigator.push(context, MaterialPageRoute(builder: (x) => SurahIraqiView(num: n))); },
+                    leading: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Icon(Icons.hexagon_outlined, size: 36, color: Color(0xFF121B22)),
+                        Text("$n", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    title: Text(quran.getSurahNameArabic(n), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    subtitle: Text("$placeAr - $verses آية - الجزء ${quran.getJuzNumber(n, 1)}", style: TextStyle(fontSize: 9, color: Colors.black54)),
+                    trailing: Icon(Icons.arrow_forward_ios, size: 10, color: Colors.black26),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DiwanSurah(num: n))),
                   ),
                 );
               },
@@ -157,69 +206,105 @@ class QuranIraqiState extends State<QuranIraqi> {
       ),
     );
   }
+  Widget _filterChip(String txt, bool sel, VoidCallback tap) {
+    return GestureDetector(
+      onTap: tap,
+      child: Container(
+        margin: EdgeInsets.only(right: 6),
+        padding: EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(color: sel ? Color(0xFF121B22) : Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Color(0xFF121B22))),
+        child: Center(child: Text(txt, style: TextStyle(color: sel ? Colors.white : Color(0xFF121B22), fontSize: 11, fontWeight: FontWeight.bold))),
+      ),
+    );
+  }
 }
 
-class SurahIraqiView extends StatefulWidget {
+class DiwanSurah extends StatefulWidget {
   final int num;
-  SurahIraqiView({required this.num});
+  DiwanSurah({required this.num});
   @override
-  State<SurahIraqiView> createState() => SurahIraqiViewState();
+  State<DiwanSurah> createState() => _DiwanSurahState();
 }
 
-class SurahIraqiViewState extends State<SurahIraqiView> {
-  AudioPlayer player = AudioPlayer();
-  int cur = 0;
+class _DiwanSurahState extends State<DiwanSurah> {
+  AudioPlayer pl = AudioPlayer();
+  int now = 0;
+  double speed = 1.0;
   play(int ayah) async {
-    setState(() { cur = ayah; });
+    setState(() => now = ayah);
     String s = widget.num.toString().padLeft(3, '0');
     String v = ayah.toString().padLeft(3, '0');
     String url = "https://everyayah.com/data/Yasser_Ad-Dosari_128kbps/${s}${v}.mp3";
-    try { await player.setUrl(url); await player.play(); } catch (e) {}
+    try {
+      await pl.setUrl(url);
+      await pl.setSpeed(speed);
+      await pl.play();
+    } catch (e) {}
   }
   @override
-  void dispose() { player.dispose(); super.dispose(); }
+  void dispose() { pl.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     int total = quran.getVerseCount(widget.num);
-    String name = quran.getSurahNameArabic(widget.num);
     return Scaffold(
-      backgroundColor: Color(0xFFFEF9EF),
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text(name, style: TextStyle(color: Colors.white))),
+      backgroundColor: Color(0xFFF8F3E6),
+      appBar: AppBar(
+        backgroundColor: Color(0xFF121B22),
+        title: Text(quran.getSurahNameArabic(widget.num), style: TextStyle(color: Colors.white)),
+        actions: [
+          PopupMenuButton<double>(
+            icon: Icon(Icons.speed, color: Colors.white),
+            onSelected: (v) { setState(() => speed = v); },
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 0.75, child: Text("بطيء 0.75x")),
+              PopupMenuItem(value: 1.0, child: Text("طبيعي 1.0x")),
+              PopupMenuItem(value: 1.25, child: Text("سريع 1.25x")),
+            ],
+          ),
+        ],
+      ),
       body: ListView.builder(
-        itemCount: total + 1,
+        itemCount: total + 2,
         itemBuilder: (c, i) {
-          if (i == total) {
+          if (i == 0) {
+            if (widget.num == 1 || widget.num == 9) return SizedBox();
             return Container(
-              margin: EdgeInsets.all(16),
-              padding: EdgeInsets.all(18),
-              decoration: BoxDecoration(color: Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(16)),
+              margin: EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: Center(child: Text("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF121B22)))),
+            );
+          }
+          if (i == total + 1) {
+            return Container(
+              margin: EdgeInsets.all(14),
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Color(0xFF121B22), borderRadius: BorderRadius.circular(14)),
               child: Column(
                 children: [
-                  Icon(Icons.favorite, color: Color(0xFFE8C86A)),
-                  SizedBox(height: 8),
-                  Text("صدقة جارية", style: TextStyle(color: Color(0xFFE8C86A), fontWeight: FontWeight.bold)),
+                  Text("ديوان عراقي - وقف", style: TextStyle(color: Color(0xFFD4AF37), fontSize: 10, fontWeight: FontWeight.bold)),
                   SizedBox(height: 6),
-                  Text("الفاتحة الى روح المرحوم", style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  Text("ناصر عزيز", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text("اللهم اجعل ثواب ما قرأنا نوراً واصلاً الى روح المرحوم ناصر عزيز", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 12, height: 1.5)),
                   SizedBox(height: 8),
-                  Text("اللهم ارحمه واغفر له واجعل قبره روضة من رياض الجنة ونقه من الذنوب كما ينقى الثوب الابيض من الدنس", textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 11, height: 1.4)),
-                  SizedBox(height: 10),
-                  Container(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(20)), child: Text("من العراق - حيدر - اهداء خاص", style: TextStyle(color: Colors.white24, fontSize: 8))),
+                  Text("المطور العراقي حيدر - بغداد - com.ha1224704.noor.quloob.sadaqa.nasser", style: TextStyle(color: Colors.white24, fontSize: 7)),
                 ],
               ),
             );
           }
-          int ayah = i + 1;
+          int ayah = i;
           String verse = quran.getVerse(widget.num, ayah, verseEndSymbol: false);
-          bool active = cur == ayah;
+          bool active = now == ayah;
           return Container(
             margin: EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-            decoration: BoxDecoration(color: active? Color(0xFFE8F5E9) : Colors.white, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: active ? Color(0xFFFFF3CD) : Colors.white, borderRadius: BorderRadius.circular(10)),
             child: ListTile(
-              leading: CircleAvatar(radius: 11, backgroundColor: active? Color(0xFF0B3D2E) : Colors.black26, child: Text("$ayah", style: TextStyle(fontSize: 8, color: Colors.white))),
-              title: Text(verse, textAlign: TextAlign.right, style: TextStyle(fontSize: 15, height: 1.6)),
-              trailing: IconButton(icon: Icon(active? Icons.pause_circle_filled : Icons.play_circle_outline, color: Color(0xFF0B3D2E)), onPressed: () { play(ayah); }),
-              onLongPress: () { Clipboard.setData(ClipboardData(text: verse)); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("تم نسخ الآية"))); },
+              title: Text(verse, textAlign: TextAlign.right, style: TextStyle(fontSize: 16, height: 1.7)),
+              subtitle: Text("الآية $ayah", style: TextStyle(fontSize: 8, color: Colors.black38)),
+              trailing: IconButton(icon: Icon(active ? Icons.pause_circle_filled : Icons.play_circle_outline, color: Color(0xFF121B22)), onPressed: () => play(ayah)),
+              onLongPress: () {
+                Clipboard.setData(ClipboardData(text: verse));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("تم نسخ الآية - صدقة لناصر")));
+              },
             ),
           );
         },
@@ -228,213 +313,197 @@ class SurahIraqiViewState extends State<SurahIraqiView> {
   }
 }
 
-class AzkarIraqi extends StatelessWidget {
+class DiwanKhatma extends StatefulWidget {
+  @override
+  State<DiwanKhatma> createState() => _DiwanKhatmaState();
+}
+
+class _DiwanKhatmaState extends State<DiwanKhatma> {
+  List<bool> done = List.generate(114, (i) => false);
+  int get progress => done.where((e) => e).length;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFEF9EF),
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text("الاذكار العراقية", style: TextStyle(color: Colors.white))),
-      body: ListView(
-        padding: EdgeInsets.all(12),
-        children: [
-          Card(child: ListTile(leading: Icon(Icons.wb_sunny, color: Colors.orange), title: Text("اذكار الصباح"), subtitle: Text("اصبحنا واصبح الملك لله والحمد لله"))),
-          Card(child: ListTile(leading: Icon(Icons.nightlight, color: Colors.indigo), title: Text("اذكار المساء"), subtitle: Text("امسينا وامسى الملك لله والحمد لله"))),
-          Card(color: Color(0xFF0B3D2E), child: ListTile(leading: Icon(Icons.favorite, color: Color(0xFFE8C86A)), title: Text("دعاء للمرحوم ناصر عزيز", style: TextStyle(color: Color(0xFFE8C86A), fontWeight: FontWeight.bold)), subtitle: Text("اللهم ارحم ناصر عزيز واغفر له واجعل قبره روضة من رياض الجنة اللهم نقه من الخطايا كما ينقى الثوب الابيض من الدنس", style: TextStyle(color: Colors.white70, fontSize: 11)))),
-          Card(child: ListTile(leading: Icon(Icons.flag, color: Colors.green), title: Text("دعاء للعراق"), subtitle: Text("اللهم احفظ العراق واهله وشعبه من كل سوء"))),
-          Card(child: ListTile(leading: Icon(Icons.self_improvement), title: Text("استغفار"), subtitle: Text("استغفر الله العظيم واتوب اليه - 100 مرة"))),
-          Card(child: ListTile(leading: Icon(Icons.mosque), title: Text("الصلاة على النبي"), subtitle: Text("اللهم صل على محمد وآل محمد"))),
-          Card(child: ListTile(leading: Icon(Icons.volunteer_activism), title: Text("دعاء الرزق"), subtitle: Text("اللهم ارزقنا رزقا حلالا طيبا مباركا فيه"))),
-        ],
-      ),
-    );
-  }
-}
-
-class SebhaIraqi extends StatefulWidget {
-  @override
-  State<SebhaIraqi> createState() => SebhaIraqiState();
-}
-
-class SebhaIraqiState extends State<SebhaIraqi> {
-  int count = 0;
-  int totalHasant = 0;
-  String zikr = "سبحان الله";
-  List<String> list = ["سبحان الله", "الحمد لله", "الله اكبر", "استغفر الله", "لا اله الا الله", "اللهم صل على محمد"];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFFEF9EF),
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text("السبحة العراقية", style: TextStyle(color: Colors.white))),
+      backgroundColor: Color(0xFFF8F3E6),
+      appBar: AppBar(backgroundColor: Color(0xFF121B22), title: Text("ختمتي العراقية", style: TextStyle(color: Colors.white, fontSize: 14))),
       body: Column(
         children: [
           Container(
             margin: EdgeInsets.all(12),
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(12)),
-            child: Row(
+            padding: EdgeInsets.all(14),
+            decoration: BoxDecoration(color: Color(0xFF121B22), borderRadius: BorderRadius.circular(14)),
+            child: Column(
               children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("عداد الحسنات", style: TextStyle(color: Color(0xFFE8C86A), fontSize: 10)), Text("$totalHasant حسنة", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))]),
-                Spacer(),
-                Text("لروح ناصر عزيز", style: TextStyle(color: Colors.white54, fontSize: 10)),
+                Row(children: [Text("تقدم الختمة", style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)), Spacer(), Text("$progress / 114 سورة", style: TextStyle(color: Color(0xFFD4AF37), fontSize: 11))]),
+                SizedBox(height: 8),
+                LinearProgressIndicator(value: progress / 114, color: Color(0xFFD4AF37), backgroundColor: Colors.white12),
+                SizedBox(height: 6),
+                Text("كل سورة تقرأها صدقة جارية لروح ناصر عزيز", style: TextStyle(color: Colors.white38, fontSize: 9)),
               ],
             ),
           ),
-          Container(
-            height: 40,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 12),
-              itemCount: list.length,
-              itemBuilder: (c,i) {
-                bool sel = list[i] == zikr;
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.all(12),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 1.6),
+              itemCount: 114,
+              itemBuilder: (c, i) {
+                bool d = done[i];
                 return GestureDetector(
-                  onTap: () { setState(() { zikr = list[i]; count = 0; }); },
-                  child: Container(margin: EdgeInsets.only(right: 6), padding: EdgeInsets.symmetric(horizontal: 14), decoration: BoxDecoration(color: sel? Color(0xFF0B3D2E) : Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: Color(0xFF0B3D2E))), child: Center(child: Text(list[i], style: TextStyle(color: sel? Colors.white : Color(0xFF0B3D2E), fontSize: 11)))),
+                  onTap: () => setState(() => done[i] = !done[i]),
+                  child: Container(
+                    margin: EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: d ? Color(0xFF121B22) : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: d ? Color(0xFFD4AF37) : Colors.black12)),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(quran.getSurahNameArabic(i + 1), style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: d ? Colors.white : Colors.black)),
+                        Icon(d ? Icons.check_circle : Icons.circle_outlined, size: 14, color: d ? Color(0xFFD4AF37) : Colors.black26),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
           ),
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(zikr, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
-                  SizedBox(height: 10),
-                  Text("$count / 33", style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E))),
-                  SizedBox(height: 20),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        count++;
-                        totalHasant++;
-                        if (count >= 33) count = 0;
-                      });
-                    },
-                    child: Container(width: 170, height: 170, decoration: BoxDecoration(color: Color(0xFF0B3D2E), shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)]), child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.touch_app, color: Colors.white30), Text("سبح", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold))]))),
-                  ),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton(onPressed: () { setState(() { count = 0; }); }, child: Text("تصفير")),
-                      SizedBox(width: 10),
-                      Text("كل تسبيحة صدقة لناصر", style: TextStyle(fontSize: 9, color: Colors.black26)),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
   }
 }
 
-class QiblaIraqi extends StatelessWidget {
+class DiwanTasbeeh extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFFEF9EF),
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text("القبلة والمواقيت - عراقي", style: TextStyle(color: Colors.white, fontSize: 14))),
-      body: ListView(
-        padding: EdgeInsets.all(14),
-        children: [
-          Container(
-            padding: EdgeInsets.all(18),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: Color(0xFF0B3D2E))),
-            child: Column(
-              children: [
-                Icon(Icons.explore, size: 60, color: Color(0xFF0B3D2E)),
-                SizedBox(height: 8),
-                Text("اتجاه القبلة من العراق", style: TextStyle(fontWeight: FontWeight.bold)),
-                Text("200° جنوب غرب", style: TextStyle(color: Color(0xFFE8C86A), fontWeight: FontWeight.bold, fontSize: 16)),
-                SizedBox(height: 8),
-                Text("ضع الهاتف مسطح واتجه للسهم", style: TextStyle(fontSize: 10, color: Colors.black45)),
-              ],
-            ),
-          ),
-          SizedBox(height: 12),
-          Text("مواقيت الصلاة - 6 محافظات عراقية", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          SizedBox(height: 8),
-          Card(child: ListTile(leading: Icon(Icons.location_on, color: Color(0xFF0B3D2E)), title: Text("بغداد", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)), subtitle: Text("فجر 04:22 - ظهر 12:05 - عصر 15:30 - مغرب 18:35 - عشاء 20:00", style: TextStyle(fontSize: 10)))),
-          Card(child: ListTile(leading: Icon(Icons.location_on), title: Text("البصرة", style: TextStyle(fontSize: 12)), subtitle: Text("فجر 04:10 - ظهر 11:58 - عصر 15:25 - مغرب 18:28 - عشاء 19:50", style: TextStyle(fontSize: 10)))),
-          Card(child: ListTile(leading: Icon(Icons.location_on), title: Text("الموصل", style: TextStyle(fontSize: 12)), subtitle: Text("فجر 04:30 - ظهر 12:12 - عصر 15:40 - مغرب 18:45 - عشاء 20:10", style: TextStyle(fontSize: 10)))),
-          Card(child: ListTile(leading: Icon(Icons.location_on), title: Text("اربيل", style: TextStyle(fontSize: 12)), subtitle: Text("فجر 04:32 - ظهر 12:14 - عصر 15:42 - مغرب 18:47 - عشاء 20:12", style: TextStyle(fontSize: 10)))),
-          Card(child: ListTile(leading: Icon(Icons.location_on), title: Text("النجف", style: TextStyle(fontSize: 12)), subtitle: Text("فجر 04:20 - ظهر 12:04 - عصر 15:29 - مغرب 18:33 - عشاء 19:58", style: TextStyle(fontSize: 10)))),
-          Card(child: ListTile(leading: Icon(Icons.location_on), title: Text("كربلاء", style: TextStyle(fontSize: 12)), subtitle: Text("فجر 04:21 - ظهر 12:04 - عصر 15:30 - مغرب 18:34 - عشاء 19:59", style: TextStyle(fontSize: 10)))),
-        ],
-      ),
-    );
-  }
+  State<DiwanTasbeeh> createState() => _DiwanTasbeehState();
 }
 
-class AllahNamesPage extends StatelessWidget {
-  final List<String> names = ["الرحمن","الرحيم","الملك","القدوس","السلام","المؤمن","المهيمن","العزيز","الجبار","المتكبر","الخالق","البارئ","المصور","الغفار","القهار","الوهاب","الرزاق","الفتاح","العليم","القابض","الباسط","الخافض","الرافع","المعز","المذل","السميع","البصير","الحكم","العدل","اللطيف","الخبير","الحليم","العظيم","الغفور","الشكور","العلي","الكبير","الحفيظ","المقيت","الحسيب","الجليل","الكريم","الرقيب","المجيب","الواسع","الحكيم","الودود","المجيد","الباعث","الشهيد","الحق","الوكيل","القوي","المتين","الولي","الحميد","المحصي","المبدئ","المعيد","المحيي","المميت","الحي","القيوم","الواجد","الماجد","الواحد","الصمد","القادر","المقتدر","المقدم","المؤخر","الاول","الاخر","الظاهر","الباطن","الوالي","المتعالي","البر","التواب","المنتقم","العفو","الرؤوف","مالك الملك","ذو الجلال والاكرام","المقسط","الجامع","الغني","المغني","المانع","الضار","النافع","النور","الهادي","البديع","الباقي","الوارث","الرشيد","الصبور"];
+class _DiwanTasbeehState extends State<DiwanTasbeeh> {
+  int count = 0;
+  int total = 0;
+  String current = "سبحان الله";
+  List<String> azkar = ["سبحان الله", "الحمد لله", "الله اكبر", "لا اله الا الله", "استغفر الله", "اللهم صل على محمد وآل محمد", "سبحان الله وبحمده"];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text("اسماء الله الحسنى - 99", style: TextStyle(color: Colors.white, fontSize: 14))),
-      body: GridView.builder(
-        padding: EdgeInsets.all(10),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, childAspectRatio: 1.5),
-        itemCount: names.length,
-        itemBuilder: (c,i) {
-          return Card(color: Color(0xFF0B3D2E), child: Center(child: Text(names[i], style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))));
-        },
-      ),
-    );
-  }
-}
-
-class DevIraqiPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFFEF9EF),
-      appBar: AppBar(backgroundColor: Color(0xFF0B3D2E), title: Text("المطور العراقي", style: TextStyle(color: Colors.white))),
-      body: ListView(
-        padding: EdgeInsets.all(14),
+      backgroundColor: Color(0xFFF8F3E6),
+      appBar: AppBar(backgroundColor: Color(0xFF121B22), title: Text("سبحتي العراقية - وقف لناصر", style: TextStyle(color: Colors.white, fontSize: 12))),
+      body: Column(
         children: [
           Container(
-            padding: EdgeInsets.all(18),
-            decoration: BoxDecoration(color: Color(0xFF0B3D2E), borderRadius: BorderRadius.circular(16)),
-            child: Column(
-              children: [
-                CircleAvatar(radius: 35, backgroundColor: Color(0xFFE8C86A), child: Icon(Icons.person, size: 40, color: Color(0xFF0B3D2E))),
-                SizedBox(height: 10),
-                Text("حيدر", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                Text("مطور تطبيقات عراقي", style: TextStyle(color: Color(0xFFE8C86A), fontSize: 12)),
-                SizedBox(height: 8),
-                Container(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(20)), child: Text("العراق - بغداد", style: TextStyle(color: Colors.white70, fontSize: 10))),
-                SizedBox(height: 10),
-                Text("هذا التطبيق صدقة جارية لروح المرحوم ناصر عزيز اسأل الله ان يجعله في ميزان حسناته", textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 11, height: 1.4)),
-              ],
+            height: 42,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              itemCount: azkar.length,
+              itemBuilder: (c, i) {
+                bool sel = azkar[i] == current;
+                return GestureDetector(
+                  onTap: () => setState(() { current = azkar[i]; count = 0; }),
+                  child: Container(margin: EdgeInsets.only(right: 6, top: 6, bottom: 6), padding: EdgeInsets.symmetric(horizontal: 14), decoration: BoxDecoration(color: sel ? Color(0xFF121B22) : Colors.white, borderRadius: BorderRadius.circular(20)), child: Center(child: Text(azkar[i], style: TextStyle(fontSize: 10, color: sel ? Color(0xFFD4AF37) : Colors.black)))),
+                );
+              },
             ),
           ),
-          SizedBox(height: 12),
-          Card(child: ListTile(leading: Icon(Icons.email, color: Color(0xFF0B3D2E)), title: Text("البريد الالكتروني", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)), subtitle: Text("ha1224704@gmail.com", style: TextStyle(fontSize: 11)))),
-          Card(child: ListTile(leading: Icon(Icons.flag, color: Colors.green), title: Text("الجنسية", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)), subtitle: Text("عراقي - من بغداد الحبيبة", style: TextStyle(fontSize: 11)))),
-          Card(child: ListTile(leading: Icon(Icons.code, color: Color(0xFF0B3D2E)), title: Text("الاختصاص", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)), subtitle: Text("مطور Flutter - تطبيقات اسلامية عراقية", style: TextStyle(fontSize: 11)))),
-          Card(child: ListTile(leading: Icon(Icons.favorite, color: Colors.red), title: Text("الهدف من التطبيق", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)), subtitle: Text("صدقة جارية للمرحوم ناصر عزيز - الله يرحمه ويغفر له", style: TextStyle(fontSize: 11)))),
-          Card(
-            child: ListTile(
-              leading: Icon(Icons.grid_view, color: Color(0xFF0B3D2E)),
-              title: Text("اسماء الله الحسنى", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              subtitle: Text("99 اسم مع عرض عراقي"),
-              trailing: Icon(Icons.arrow_forward_ios, size: 12),
-              onTap: () { Navigator.push(context, MaterialPageRoute(builder: (c) => AllahNamesPage())); },
-            ),
-          ),
-          Card(child: ListTile(leading: Icon(Icons.info), title: Text("اسم الحزمة", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)), subtitle: Text("com.ha1224704.noor.quloob.sadaqa.nasser", style: TextStyle(fontSize: 9)))),
-          Card(child: ListTile(leading: Icon(Icons.security), title: Text("الخصوصية", style: TextStyle(fontSize: 12)), subtitle: Text("التطبيق لا يجمع اي بيانات - آمن 100% - صنع في العراق", style: TextStyle(fontSize: 10)))),
           SizedBox(height: 10),
-          Center(child: Text("صنع بكل فخر في العراق", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0B3D2E)))),
-          Center(child: Text("2026 - جميع الحقوق محفوظة - حيدر العراقي", style: TextStyle(fontSize: 9, color: Colors.black38))),
-          SizedBox(height: 6),
-          Center(child: Text("8 قراء - 114 سورة - يعمل بدون انترنت للقراءة", style: TextStyle(fontSize: 8, color: Colors.black26))),
+          Text(current, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF121B22))),
+          Text("المجموع الكلي: $total تسبيحة - صدقة لناصر", style: TextStyle(fontSize: 10, color: Colors.black45)),
+          SizedBox(height: 10),
+          Center(
+            child: Column(
+              children: [
+                Text("$count", style: TextStyle(fontSize: 80, fontWeight: FontWeight.bold, color: Color(0xFF121B22))),
+                Text("/ 33", style: TextStyle(fontSize: 14, color: Colors.black38)),
+                SizedBox(height: 18),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      count++;
+                      total++;
+                      if (count > 33) count = 1;
+                    });
+                  },
+                  child: Container(
+                    width: 190, height: 190,
+                    decoration: BoxDecoration(color: Color(0xFF121B22), shape: BoxShape.circle, border: Border.all(color: Color(0xFFD4AF37), width: 4)),
+                    child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.touch_app, color: Color(0xFFD4AF37)), Text("سبح", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)), Text("اضغط", style: TextStyle(color: Colors.white24, fontSize: 9))])),
+                  ),
+                ),
+                SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF121B22)), onPressed: () => setState(() => count = 0), child: Text("تصفير", style: TextStyle(color: Color(0xFFD4AF37)))),
+                    SizedBox(width: 10),
+                    Text("صنع في العراق", style: TextStyle(fontSize: 9, color: Colors.black26)),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class DiwanIraqiDev extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xFFF8F3E6),
+      appBar: AppBar(backgroundColor: Color(0xFF121B22), title: Text("المطور العراقي - ما مطروق", style: TextStyle(color: Colors.white, fontSize: 13))),
+      body: ListView(
+        padding: EdgeInsets.all(14),
+        children: [
+          Container(
+            padding: EdgeInsets.all(18),
+            decoration: BoxDecoration(color: Color(0xFF121B22), borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              children: [
+                Container(width: 70, height: 70, decoration: BoxDecoration(color: Color(0xFFD4AF37), shape: BoxShape.circle), child: Icon(Icons.code, size: 35, color: Color(0xFF121B22))),
+                SizedBox(height: 10),
+                Text("حيدر العراقي", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text("مطور ديوان نور القلوب", style: TextStyle(color: Color(0xFFD4AF37), fontSize: 11, fontWeight: FontWeight.bold)),
+                SizedBox(height: 6),
+                Text("بغداد - العراق - 2026", style: TextStyle(color: Colors.white38, fontSize: 10)),
+                SizedBox(height: 10),
+                Text("هذا التطبيق ما مطروق - فكرة جديدة كليا - ديوان عراقي يجمع القرآن والختمة والسبحة - صنعته بايدي عراقية خالصة صدقة جارية لروح المرحوم ناصر عزيز الله يرحمه ويجعل مثواه الجنة", textAlign: TextAlign.center, style: TextStyle(color: Colors.white60, fontSize: 11, height: 1.5)),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
+          _devCard(Icons.email, "البريد", "ha1224704@gmail.com"),
+          _devCard(Icons.flag, "الهوية", "عراقي - بغداد - ابو الخصيب - البصرة"),
+          _devCard(Icons.favorite, "الوقف", "صدقة جارية للمرحوم ناصر عزيز - الفاتحة على روحه الطاهرة"),
+          _devCard(Icons.code, "التقنية", "Flutter - تصميم ديوان عراقي تراثي - الوان ترابية ذهبية"),
+          _devCard(Icons.inventory, "الحزمة", "com.ha1224704.noor.quloob.sadaqa.nasser - اصدار 1.0.0 - ما مطروق"),
+          _devCard(Icons.security, "الخصوصية", "لا يجمع اي بيانات - يعمل بدون انترنت - آمن 100%"),
+          SizedBox(height: 10),
+          Container(
+            padding: EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Color(0xFFD4AF37))),
+            child: Column(
+              children: [
+                Text("مميزات النسخة الما مطروقة", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF121B22))),
+                SizedBox(height: 6),
+                Text("• ديوان بفلترة مكية مدنية طوال قصار\n• ختمة تفاعلية 114 سورة مع حفظ التقدم\n• سبحة ب7 اذكار مع عداد حسنات\n• سرعة صوت 0.75x 1x 1.25x\n• ورد يومي - آية اليوم\n• تصميم تراثي ذهبي اسود - الوان عراقية", style: TextStyle(fontSize: 10, height: 1.6, color: Colors.black87)),
+              ],
+            ),
+          ),
+          SizedBox(height: 12),
+          Center(child: Text("صنع بكل فخر في العراق - ديوان عراقي اصيل", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF121B22)))),
+          Center(child: Text("2026 - حيدر - لا يوجد مثله في المتجر", style: TextStyle(fontSize: 9, color: Colors.black38))),
+        ],
+      ),
+    );
+  }
+  Widget _devCard(IconData ic, String title, String sub) {
+    return Card(
+      margin: EdgeInsets.only(bottom: 6),
+      child: ListTile(
+        leading: CircleAvatar(backgroundColor: Color(0xFF121B22), radius: 16, child: Icon(ic, size: 14, color: Color(0xFFD4AF37))),
+        title: Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+        subtitle: Text(sub, style: TextStyle(fontSize: 10)),
       ),
     );
   }
