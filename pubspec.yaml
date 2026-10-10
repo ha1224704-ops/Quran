@@ -1,5 +1,5 @@
 name: quran_noor
-description: Quran Noor for Nasser Aziz
+description: نور القلوب صدقة لروح المرحوم ناصر عزيز
 publish_to: none
 version: 1.0.0+1
 environment:
@@ -8,6 +8,5 @@ dependencies:
   flutter:
     sdk: flutter
   quran: ^1.2.1
-  just_audio: ^0.9.36
 flutter:
   uses-material-design: true
