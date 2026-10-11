@@ -1,18 +1,13 @@
 name: uran
-description: تطبيق قرآن كريم - رفيقك اليومي مع كتاب الله
-publish_to: 'none'
+description: نور القلوب صدقة جارية لناصر عزيز - 10 قراء عراقي
+publish_to: none
 version: 1.0.0+1
-
 environment:
-  sdk: '>=2.17.0 <4.0.0'
-
+  sdk: ">=3.0.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  shared_preferences: ^2.2.2
-  url_launcher: ^6.2.4
-  just_audio: ^0.9.36
-
+  quran: ^1.4.1
+  just_audio: ^0.9.46
 flutter:
   uses-material-design: true
