@@ -1,393 +1,84 @@
 import 'package:flutter/material.dart';
-import 'theme.dart';
-import 'pages/home_page.dart';
-import 'pages/quran_page.dart';
-import 'pages/saved_page.dart';
-import 'pages/settings_page.dart';
-import 'services/storage_service.dart';
-import 'services/quran_api.dart';
+import 'package:quran/quran.dart' as quran;
+import 'package:just_audio/just_audio.dart';
+import 'package:flutter/services.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await StorageService.init();
-  runApp(const QuranApp());
-}
+void main() => runApp(const MyApp());
+class MyApp extends StatelessWidget{const MyApp({super.key});@override Widget build(BuildContext c)=>const MaterialApp(debugShowCheckedModeBanner:false,home:SplashPage());}
+class SplashPage extends StatefulWidget{const SplashPage({super.key});@override State<SplashPage> createState()=>_S();}
+class _S extends State<SplashPage>{double p=0;@override void initState(){super.initState();_l();}Future<void>_l()async{for(int i=0;i<=100;i++){await Future.delayed(const Duration(milliseconds:16));if(!mounted)return;setState(()=>p=i/100);}Navigator.pushReplacement(context,MaterialPageRoute(builder:(_)=>const Tabs()));}@override Widget build(BuildContext c){return Scaffold(backgroundColor:const Color(0xFF0B3D2E),body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Container(width:90,height:90,decoration:BoxDecoration(color:const Color(0xFFE8C86A),borderRadius:BorderRadius.circular(22)),child:const Icon(Icons.mosque,size:48,color:Color(0xFF0B3D2E))),const Text("نور القلوب",style:TextStyle(color:Colors.white,fontSize:26,fontWeight:FontWeight.bold)),const Text("صدقة جارية لناصر عزيز",style:TextStyle(color:Color(0xFFE8C86A))),SizedBox(width:170,child:LinearProgressIndicator(value:p,color:const Color(0xFFE8C86A),backgroundColor:Colors.white12))])));}}
+class Tabs extends StatefulWidget{const Tabs({super.key});@override State<Tabs> createState()=>_T();}
+class _T extends State<Tabs>{int i=0;final pages=[const QuranList(),const Azkar(),const Sebha(),const Nasser(),const About()];@override Widget build(BuildContext c){return Scaffold(body:pages[i],bottomNavigationBar:BottomNavigationBar(currentIndex:i,onTap:(v)=>setState(()=>i=v),type:BottomNavigationBarType.fixed,selectedItemColor:const Color(0xFF0B3D2E),items:const[BottomNavigationBarItem(icon:Icon(Icons.menu_book),label:"القرآن"),BottomNavigationBarItem(icon:Icon(Icons.favorite),label:"أذكار"),BottomNavigationBarItem(icon:Icon(Icons.circle),label:"سبحة"),BottomNavigationBarItem(icon:Icon(Icons.volunteer_activism),label:"ناصر"),BottomNavigationBarItem(icon:Icon(Icons.flag),label:"عراقي")]));}}
+class QuranList extends StatelessWidget{const QuranList({super.key});@override Widget build(BuildContext c){return Scaffold(backgroundColor:const Color(0xFFFEF9EF),appBar:AppBar(backgroundColor:const Color(0xFF0B3D2E),title:const Text("القرآن - 10 قراء عراقي وأكثر",style:TextStyle(color:Colors.white,fontSize:12))),body:ListView.builder(itemCount:114,itemBuilder:(c,idx){int n=idx+1;return Card(margin:const EdgeInsets.symmetric(horizontal:10,vertical:3),child:ListTile(leading:CircleAvatar(backgroundColor:const Color(0xFF0B3D2E),radius:16,child:Text("$n",style:const TextStyle(color:Colors.white,fontSize:10))),title:Text(quran.getSurahNameArabic(n),style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:Text("${quran.getSurahName(n)}",style:const TextStyle(fontSize:10)),onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>SurahView(num:n)))));}));}}
 
-class QuranApp extends StatefulWidget {
-  const QuranApp({Key? key}) : super(key: key);
+class SurahView extends StatefulWidget{final int num;const SurahView({super.key,required this.num});@override State<SurahView> createState()=>_SV();}
+class _SV extends State<SurahView>{
+  final player=AudioPlayer();
+  int cur=0;
+  String sel="Yasser_Ad-Dosari_128kbps";
 
-  @override
-  State<QuranApp> createState() => QuranAppState();
-}
+  // 10 قراء - التركيز عراقي
+  final reciters=[
+    {"name":"🇮🇶 عامر الكاظمي - عراقي","f":"Amer_Al-Kazemi_64kbps"},
+    {"name":"🇮🇶 مصطفى نامج - عراقي","f":"Mustafa_Al-Azawi_64kbps"},
+    {"name":"🇮🇶 ضرغام الكرعاوي - عراقي","f":"Dorgham_Al-Karawi_64kbps"},
+    {"name":"🇮🇶 خضر عباس - عراقي","f":"Khidr_Abbas_64kbps"},
+    {"name":"🇮🇶 مهند الموسوي - عراقي","f":"Mohanad_Al-Mosawi_64kbps"},
+    {"name":"ياسر الدوسري","f":"Yasser_Ad-Dosari_128kbps"},
+    {"name":"المنشاوي مجود","f":"Minshawy_Mujawwad_192kbps"},
+    {"name":"المنشاوي مرتل","f":"Mohammed_Siddiq_Al-Minshawi_128kbps"},
+    {"name":"عبدالباسط عبدالصمد","f":"Abdul_Basit_Murattal_192kbps"},
+    {"name":"ماهر المعيقلي","f":"Maher_AlMuaiqly_64kbps"},
+  ];
 
-class QuranAppState extends State<QuranApp> {
-  ThemeMode themeMode = ThemeMode.light;
-  double quranFontSize = 26.0;
+  @override void dispose(){player.dispose();super.dispose();}
 
-  @override
-  void initState() {
-    super.initState();
-    themeMode = StorageService.getThemeMode();
-    quranFontSize = StorageService.getQuranFontSize();
-  }
-
-  void toggleTheme() {
-    setState(() {
-      themeMode =
-          themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    });
-    StorageService.setThemeMode(themeMode);
-  }
-
-  void setQuranFontSize(double size) {
-    setState(() => quranFontSize = size);
-    StorageService.setQuranFontSize(size);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Quran',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: themeMode,
-      home: const SplashDownloadPage(),
-    );
-  }
-}
-
-// ============================================================
-// شاشة التحميل الأولى
-// ============================================================
-class SplashDownloadPage extends StatefulWidget {
-  const SplashDownloadPage({Key? key}) : super(key: key);
-
-  @override
-  State<SplashDownloadPage> createState() => _SplashDownloadPageState();
-}
-
-class _SplashDownloadPageState extends State<SplashDownloadPage> {
-  bool _checking = true;
-  bool _downloading = false;
-  bool _error = false;
-  int _current = 0;
-  int _total = 114;
-  String _surahName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAndDownload();
-  }
-
-  Future<void> _checkAndDownload() async {
-    setState(() {
-      _checking = true;
-      _error = false;
-    });
-
-    if (StorageService.isFullQuranReady()) {
-      if (!mounted) return;
-      _goToApp();
-      return;
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _checking = false;
-      _downloading = true;
-    });
-
-    await _downloadQuran();
-  }
-
-  Future<void> _downloadQuran() async {
-    try {
-      final fullQuran = await QuranApi.fetchFullQuran(
-        onProgress: (current, total, surahName) {
-          if (!mounted) return;
-          setState(() {
-            _current = current;
-            _total = total;
-            _surahName = surahName.replaceAll('سُورَةُ ', '');
-          });
-        },
-      );
-
-      // احفظ السور أيضاً
-      try {
-        final surahs = await QuranApi.fetchSurahs();
-        await StorageService.saveSurahsCache(surahs);
-      } catch (_) {}
-
-      await StorageService.saveFullQuran(fullQuran);
-
-      if (!mounted) return;
-      _goToApp();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _downloading = false;
-        _error = true;
-      });
+  void play(int ay)async{
+    setState(()=>cur=ay);
+    String s=widget.num.toString().padLeft(3,'0');
+    String v=ay.toString().padLeft(3,'0');
+    // الرابط الاساسي everyayah
+    String url="https://everyayah.com/data/$sel/${s}${v}.mp3";
+    try{
+      await player.setUrl(url);
+      player.play();
+    }catch(_){
+      // اذا فشل - جرب سيرفر ثاني عراقي من mp3quran
+      try{
+        String url2="https://server8.mp3quran.net/$sel/${s.padLeft(3,'0')}.mp3";
+        await player.setUrl(url2);
+        player.play();
+      }catch(_){
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text("هذا المقطع غير متوفر لهذا القارئ - جرب ${reciters[5]["name"]}")));
+      }
     }
   }
 
-  void _goToApp() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const MainShellPage()),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+  @override Widget build(BuildContext c){
+    int tot=quran.getVerseCount(widget.num);
+    String curName=reciters.firstWhere((r)=>r["f"]==sel)["name"]!;
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // أيقونة التطبيق
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [scheme.primary, scheme.primary.withOpacity(.6)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(32),
-                    boxShadow: [
-                      BoxShadow(
-                        color: scheme.primary.withOpacity(.3),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    Icons.menu_book_rounded,
-                    size: 64,
-                    color: scheme.onPrimary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'رفيق القرآن',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: scheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'رفيقك اليومي مع كتاب الله',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 48),
-
-                if (_checking) ...[
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  const Text('جارٍ التحقق من البيانات...'),
-                ] else if (_downloading) ...[
-                  Text(
-                    'جارٍ تحضير المصحف',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _surahName.isNotEmpty
-                        ? 'سورة $_surahName'
-                        : 'جارٍ التحميل...',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: LinearProgressIndicator(
-                      value: _total > 0 ? _current / _total : 0,
-                      minHeight: 8,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '$_current من $_total سورة (${_total > 0 ? ((_current / _total) * 100).toStringAsFixed(0) : 0}%)',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: scheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceVariant.withOpacity(.5),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline_rounded,
-                            size: 20, color: scheme.primary),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'يتم التحميل مرة واحدة فقط. بعد ذلك يعمل التطبيق بلا إنترنت.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: scheme.onSurfaceVariant,
-                              height: 1.6,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else if (_error) ...[
-                  Icon(Icons.error_outline_rounded,
-                      size: 64, color: scheme.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    'تعذر تحميل المصحف',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: scheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'تأكد من اتصالك بالإنترنت ثم أعد المحاولة.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: _checkAndDownload,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('إعادة المحاولة'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 14),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+      backgroundColor:const Color(0xFFFEF9EF),
+      appBar:AppBar(backgroundColor:const Color(0xFF0B3D2E),title:Text(quran.getSurahNameArabic(widget.num),style:const TextStyle(color:Colors.white,fontSize:13))),
+      body:Column(children:[
+        Container(color:const Color(0xFF0B3D2E),padding:const EdgeInsets.symmetric(horizontal:8,vertical:4),child:Row(children:[
+          const Icon(Icons.flag,color:Color(0xFFE8C86A),size:16),
+          const SizedBox(width:4),
+          Expanded(child:DropdownButtonHideUnderline(child:DropdownButton<String>(value:sel,isExpanded:true,dropdownColor:const Color(0xFF0B3D2E),style:const TextStyle(color:Colors.white,fontSize:11),items:reciters.map((r)=>DropdownMenuItem(value:r["f"],child:Text(r["name"]!,style:const TextStyle(color:Colors.white,fontSize:11)))).toList(),onChanged:(v){if(v!=null){setState(()=>sel=v);player.stop();}}))),
+        ])),
+        Container(width:double.infinity,color:const Color(0xFFE8C86A).withOpacity(0.3),padding:const EdgeInsets.all(4),child:Text("الآن: $curName",textAlign:TextAlign.center,style:const TextStyle(fontSize:10,fontWeight:FontWeight.bold))),
+        Expanded(child:ListView.builder(itemCount:tot+1,itemBuilder:(c,i){
+          if(i==tot){return Container(margin:const EdgeInsets.all(14),padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:const Color(0xFF0B3D2E),borderRadius:BorderRadius.circular(12),border:Border.all(color:const Color(0xFFE8C86A),width:1.2)),child:const Column(children:[Text("🇮🇶 صدقة جارية للمرحوم ناصر عزيز",style:TextStyle(color:Color(0xFFE8C86A),fontWeight:FontWeight.bold)),Text("اللهم ارحمه واغفر له - بصوت عراقي",textAlign:TextAlign.center,style:TextStyle(color:Colors.white70,fontSize:11)),Text("ha1224704@gmail.com",style:TextStyle(color:Colors.white24,fontSize:6))]));}
+          int ay=i+1;String verse=quran.getVerse(widget.num,ay,verseEndSymbol:false);bool act=cur==ay;
+          return Card(color:act?const Color(0xFFE8F5E9):Colors.white,child:ListTile(leading:CircleAvatar(radius:11,backgroundColor:const Color(0xFF0B3D2E),child:Text("$ay",style:const TextStyle(color:Colors.white,fontSize:7))),title:Text(verse,textAlign:TextAlign.right,style:const TextStyle(fontSize:15,height:1.6)),trailing:IconButton(icon:Icon(act?Icons.pause_circle:Icons.play_circle_outline,color:act?Colors.green:Colors.black54),onPressed:()=>play(ay)),onLongPress:(){Clipboard.setData(ClipboardData(text:verse));}));
+        }))
+      ]),
     );
   }
 }
 
-// ============================================================
-// الواجهة الرئيسية
-// ============================================================
-class MainShellPage extends StatefulWidget {
-  const MainShellPage({Key? key}) : super(key: key);
-
-  @override
-  State<MainShellPage> createState() => _MainShellPageState();
-}
-
-class _MainShellPageState extends State<MainShellPage> {
-  int _index = 0;
-  ThemeMode _themeMode = ThemeMode.light;
-  double _quranFontSize = 26.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _themeMode = StorageService.getThemeMode();
-    _quranFontSize = StorageService.getQuranFontSize();
-  }
-
-  void _toggleTheme() {
-    final appState = context.findAncestorStateOfType<QuranAppState>();
-    if (appState != null) {
-      appState.toggleTheme();
-      setState(() {
-        _themeMode = appState.themeMode;
-      });
-    }
-  }
-
-  void _setQuranFontSize(double size) {
-    final appState = context.findAncestorStateOfType<QuranAppState>();
-    if (appState != null) {
-      appState.setQuranFontSize(size);
-    }
-    setState(() => _quranFontSize = size);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: IndexedStack(
-          index: _index,
-          children: [
-            HomePage(onGoToQuran: () => setState(() => _index = 1)),
-            QuranPage(quranFontSize: _quranFontSize),
-            const SavedPage(),
-            SettingsPage(
-              isDarkMode: _themeMode == ThemeMode.dark,
-              onThemeChanged: _toggleTheme,
-              quranFontSize: _quranFontSize,
-              onQuranFontSizeChanged: _setQuranFontSize,
-            ),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (value) => setState(() => _index = value),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home_rounded),
-              label: 'الرئيسية',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined),
-              selectedIcon: Icon(Icons.menu_book_rounded),
-              label: 'المصحف',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.bookmark_outline_rounded),
-              selectedIcon: Icon(Icons.bookmark_rounded),
-              label: 'المحفوظات',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings_rounded),
-              label: 'الإعدادات',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+class Azkar extends StatelessWidget{const Azkar({super.key});@override Widget build(BuildContext c){return Scaffold(backgroundColor:const Color(0xFFFEF9EF),appBar:AppBar(backgroundColor:const Color(0xFF0B3D2E),title:const Text("الأذكار",style:TextStyle(color:Colors.white))),body:ListView(padding:const EdgeInsets.all(10),children:const[Card(child:ListTile(title:Text("🇮🇶 قراء عراقيون"),subtitle:Text("عامر الكاظمي - مصطفى نامج - ضرغام - خضر عباس - مهند"))),Card(color:Color(0xFF0B3D2E),child:ListTile(title:Text("دعاء لناصر عزيز",style:TextStyle(color:Color(0xFFE8C86A))),subtitle:Text("اللهم ارحم ناصر عزيز",style:TextStyle(color:Colors.white70))))]));}}
+class Sebha extends StatefulWidget{const Sebha({super.key});@override State<Sebha> createState()=>_Se();}
+class _Se extends State<Sebha>{int co=0;@override Widget build(BuildContext c){return Scaffold(backgroundColor:const Color(0xFFFEF9EF),appBar:AppBar(backgroundColor:const Color(0xFF0B3D2E),title:const Text("السبحة",style:TextStyle(color:Colors.white))),body:Center(child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text("$co",style:const TextStyle(fontSize:70,fontWeight:FontWeight.bold)),GestureDetector(onTap:()=>setState(()=>co++),child:Container(width:160,height:160,decoration:const BoxDecoration(color:Color(0xFF0B3D2E),shape:BoxShape.circle),child:const Center(child:Text("سبح",style:TextStyle(color:Colors.white,fontSize:26))))),TextButton(onPressed:()=>setState(()=>co=0),child:const Text("تصفير"))])));}}
+class Nasser extends StatelessWidget{const Nasser({super.key});@override Widget build(BuildContext c){return Scaffold(backgroundColor:const Color(0xFFFEF9EF),appBar:AppBar(backgroundColor:const Color(0xFF0B3D2E),title:const Text("ناصر عزيز",style:TextStyle(color:Colors.white))),body:Center(child:Container(margin:const EdgeInsets.all(16),padding:const EdgeInsets.all(18),decoration:BoxDecoration(color:const Color(0xFF0B3D2E),borderRadius:BorderRadius.circular(14)),child:const Column(mainAxisSize:MainAxisSize.min,children:[Text("المرحوم ناصر عزيز",style:TextStyle(color:Colors.white,fontSize:18,fontWeight:FontWeight.bold)),Text("اللهم ارحمه واغفر له",textAlign:TextAlign.center,style:TextStyle(color:Colors.white70))]))));}}
+class About extends StatelessWidget{const About({super.key});@override Widget build(BuildContext c){return Scaffold(backgroundColor:const Color(0xFFFEF9EF),appBar:AppBar(backgroundColor:const Color(0xFF0B3D2E),title:const Text("المطور العراقي",style:TextStyle(color:Colors.white))),body:ListView(padding:const EdgeInsets.all(12),children:[Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:const Color(0xFF0B3D2E),borderRadius:BorderRadius.circular(12)),child:const Column(children:[Text("حيدر - بغداد - العراق",style:TextStyle(color:Colors.white,fontWeight:FontWeight.bold)),Text("ha1224704@gmail.com",style:TextStyle(color:Color(0xFFE8C86A),fontSize:11)),Text("10 قراء - 5 عراقيين - com.ali.nasser.aziz.al.malike",style:TextStyle(color:Colors.white60,fontSize:8))]))]));}}
