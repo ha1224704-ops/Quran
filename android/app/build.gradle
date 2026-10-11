@@ -3,21 +3,17 @@ plugins {
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
 }
-
 android {
     namespace = "com.example.uran"
-    compileSdk = 36
+    compileSdk = 33
     ndkVersion = flutter.ndkVersion
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
     kotlinOptions {
         jvmTarget = "17"
     }
-
     defaultConfig {
         applicationId = "com.example.uran"
         minSdk = 21
@@ -25,14 +21,19 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
-
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            debuggable = false
+            jniDebuggable = false
+            renderscriptDebuggable = false
+            zipAlignEnabled = true
         }
     }
 }
-
 flutter {
     source = "../.."
 }
